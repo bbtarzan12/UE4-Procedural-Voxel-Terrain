@@ -4,6 +4,7 @@
 #include "VoxelWorldHUD.h"
 #include "VoxelWorldCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Voxel/VoxelWorldGameState.h"
 
 AVoxelWorldGameMode::AVoxelWorldGameMode()
 	: Super()
@@ -14,4 +15,6 @@ AVoxelWorldGameMode::AVoxelWorldGameMode()
 
 	// use our custom HUD class
 	HUDClass = AVoxelWorldHUD::StaticClass();
+
+	GameStateClass = AVoxelWorldGameState::StaticClass();
 }

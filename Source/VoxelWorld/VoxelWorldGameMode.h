@@ -3,16 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include <GameFramework/GameMode.h>
 #include "VoxelWorldGameMode.generated.h"
 
 UCLASS(minimalapi)
-class AVoxelWorldGameMode : public AGameModeBase
+class AVoxelWorldGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
 public:
 	AVoxelWorldGameMode();
+
 };
 
 
