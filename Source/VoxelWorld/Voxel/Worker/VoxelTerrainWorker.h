@@ -22,7 +22,8 @@ public:
 	static void Shutdown();
 
 private:
-
+	void GenerateMesh(FTerrainWorkerInformation& Information);
+	void AddQuadByDirection(int32 Direction, uint8 type, float Width, float Height, FIntVector GridLocation, int32 NumFace, FTerrainWorkerInformation& Information);
 
 	TQueue<FTerrainWorkerInformation> Queue;
 
@@ -30,8 +31,11 @@ private:
 	FThreadSafeCounter StopCounter;
 
 	static const FVector CubeVertices[];
-	static const int CubeFaces[];
-	static const int CubeIndices[];
+	static const int32 CubeFaces[];
+	static const int32 CubeIndices[];
 	static const FIntVector VoxelDirectionOffsets[];
+	static const int32 DirectionAlignedX[];
+	static const int32 DirectionAlignedY[];
+	static const int32 DirectionAlignedZ[];
 	
 };

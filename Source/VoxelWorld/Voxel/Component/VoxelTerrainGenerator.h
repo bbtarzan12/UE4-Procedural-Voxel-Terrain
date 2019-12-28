@@ -39,12 +39,12 @@ public:
 	FIntVector ChunkSize{ 16, 16, 128};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Voxel)
-	FIntPoint ChunkSpawnSize{2, 2};
+	FIntPoint ChunkSpawnSize{4, 4};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Voxel)
 	float ChunkScale = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Voxel)
-	int32 MaxGenerateChunksInFrame = 1;
+	int32 MaxGenerateChunksInFrame = 5;
 		
 };

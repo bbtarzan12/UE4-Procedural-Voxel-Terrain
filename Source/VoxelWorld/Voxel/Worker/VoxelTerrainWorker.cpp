@@ -37,38 +37,7 @@ uint32 FVoxelTerrainWorker::Run()
 		FTerrainWorkerInformation Information;
 		Queue.Dequeue(Information);
 
-		int NumFaces = 0;
-		const FIntVector& ChunkSize = Information.ChunkSize;
-		const TArray<FVoxel>& Voxels = Information.Voxels;
-
-		for (int32 VoxelIndex = 0; VoxelIndex < ChunkSize.X * ChunkSize.Y * ChunkSize.Z; VoxelIndex++)
-		{
-			if (Voxels[VoxelIndex].Type == 0)
-				continue;
-
-			FIntVector GridLocation = UVoxelUtil::To3DIndex(VoxelIndex, ChunkSize);
-
-			for (int32 Direction = 0; Direction < 6; Direction++)
-			{
-				FIntVector NeighborLocation = GridLocation + VoxelDirectionOffsets[Direction];
-
-				if (UVoxelUtil::TransparencyCheck(Voxels, NeighborLocation, ChunkSize))
-					continue;
-
-				for (int32 Index = 0; Index < 4; Index++)
-				{
-					FVector Vertex = (CubeVertices[CubeFaces[Index + Direction * 4]] + FVector(GridLocation)) * Information.ChunkScale;
-					Information.Vertices.Add(Vertex);
-					Information.Normals.Add(FVector(VoxelDirectionOffsets[Direction]));
-				}
-
-				for (int Index = 0; Index < 6; Index++)
-				{
-					Information.Indices.Add(CubeIndices[Direction * 6 + Index] + NumFaces * 4);
-				}
-				NumFaces++;
-			}
-		}
+		GenerateMesh(Information);
 
 		if (StopCounter.GetValue() == 0 && Information.MeshComponent)
 		{
@@ -104,6 +73,128 @@ void FVoxelTerrainWorker::Shutdown()
 }
 
 
+void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
+{
+	int NumFaces = 0;
+	const FIntVector& ChunkSize = Information.ChunkSize;
+	const TArray<FVoxel>& Voxels = Information.Voxels;
+
+	for (int32 Direction = 0; Direction < 6; Direction++)
+	{		
+		for (int32 Depth = 0; Depth < ChunkSize[DirectionAlignedZ[Direction]]; Depth++)
+		{
+			TSet<FIntVector> VisitedSet;
+			for (int32 X = 0; X < ChunkSize[DirectionAlignedX[Direction]]; X++)
+			{
+				for (int32 Y = 0; Y < ChunkSize[DirectionAlignedY[Direction]];)
+				{
+					FIntVector GridLocation;
+					GridLocation[DirectionAlignedX[Direction]] = X;
+					GridLocation[DirectionAlignedY[Direction]] = Y;
+					GridLocation[DirectionAlignedZ[Direction]] = Depth;
+					
+					FVoxel Voxel = Voxels[UVoxelUtil::To1DIndex(GridLocation, ChunkSize)];
+
+					if (Voxel.Type == 0)
+					{
+						Y++;
+						continue;
+					}
+
+					if (VisitedSet.Contains(GridLocation))
+					{
+						Y++;
+						continue;
+					}
+
+					FIntVector NeighborLocation = GridLocation + VoxelDirectionOffsets[Direction];
+
+					if (UVoxelUtil::TransparencyCheck(Voxels, NeighborLocation, ChunkSize))
+					{
+						Y++;
+						continue;
+					}
+
+					VisitedSet.Add(GridLocation);
+
+					int32 Height;
+					for (Height = 1; Height + Y < ChunkSize[DirectionAlignedY[Direction]]; Height++)
+					{
+						FIntVector NextLocation = GridLocation;
+						NextLocation[DirectionAlignedY[Direction]] += Height;
+
+						FVoxel NextVoxel = Voxels[UVoxelUtil::To1DIndex(NextLocation, ChunkSize)];
+
+						if (NextVoxel.Type != Voxel.Type)
+							break;
+
+						if (VisitedSet.Contains(NextLocation))
+							break;
+
+						VisitedSet.Add(NextLocation);
+					}
+
+					bool bDone = false;
+					int32 Width;
+					for (Width = 1; Width + X < ChunkSize[DirectionAlignedX[Direction]]; Width++)
+					{
+						for (int32 dy = 0; dy < Height; dy++)
+						{
+							FIntVector NextLocation = GridLocation;
+							NextLocation[DirectionAlignedX[Direction]] += Width;
+							NextLocation[DirectionAlignedY[Direction]] += dy;
+
+							FVoxel NextVoxel = Voxels[UVoxelUtil::To1DIndex(NextLocation, ChunkSize)];
+
+							if (NextVoxel.Type != Voxel.Type || VisitedSet.Contains(NextLocation))
+							{
+								bDone = true;
+								break;
+							}
+						}
+
+						if (bDone)
+						{
+							break;
+						}
+
+						for (int32 dy = 0; dy < Height; dy++)
+						{
+							FIntVector NextLocation = GridLocation;
+							NextLocation[DirectionAlignedX[Direction]] += Width;
+							NextLocation[DirectionAlignedY[Direction]] += dy;
+							VisitedSet.Add(NextLocation);
+						}
+					}
+
+					AddQuadByDirection(Direction, Voxel.Type, Width, Height, GridLocation, NumFaces, Information);
+					Y += Height;
+					NumFaces++;
+				}
+			}
+		}
+	}
+}
+
+void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 type, float Width, float Height, FIntVector GridLocation, int32 NumFace, FTerrainWorkerInformation& Information)
+{
+	for (int32 Index = 0; Index < 4; Index++)
+	{
+		FVector Vertex = CubeVertices[CubeFaces[Index + Direction * 4]];
+		Vertex[DirectionAlignedX[Direction]] *= Width;
+		Vertex[DirectionAlignedY[Direction]] *= Height;
+		Vertex = (Vertex + FVector(GridLocation)) * Information.ChunkScale;
+
+		Information.Vertices.Add(Vertex);
+		Information.Normals.Add(FVector(VoxelDirectionOffsets[Direction]));
+	}
+
+	for (int Index = 0; Index < 6; Index++)
+	{
+		Information.Indices.Add(CubeIndices[Direction * 6 + Index] + NumFace * 4);
+	}
+}
+
 const FVector FVoxelTerrainWorker::CubeVertices[]
 {
 	FVector(0.f, 0.f, 0.f),
@@ -116,7 +207,7 @@ const FVector FVoxelTerrainWorker::CubeVertices[]
 	FVector(0.f, 1.f, 1.f)
 };
 
-const int FVoxelTerrainWorker::CubeFaces[]
+const int32 FVoxelTerrainWorker::CubeFaces[]
 {
 	1, 2, 5, 6, // front
 	3, 0, 7, 4, // back
@@ -126,7 +217,7 @@ const int FVoxelTerrainWorker::CubeFaces[]
 	3, 2, 0, 1, // bottom
 };
 
-const int FVoxelTerrainWorker::CubeIndices[]
+const int32 FVoxelTerrainWorker::CubeIndices[]
 {
 	0, 3, 1,
 	0, 2, 3, //face front
@@ -151,3 +242,7 @@ const FIntVector FVoxelTerrainWorker::VoxelDirectionOffsets[]
 	FIntVector{0, 0, 1}, // top
 	FIntVector{0, 0, -1}, // bottom
 };
+
+const int32 FVoxelTerrainWorker::DirectionAlignedX[] {1, 1, 0, 0, 0, 0};
+const int32 FVoxelTerrainWorker::DirectionAlignedY[] {2, 2, 2, 2, 1, 1};
+const int32 FVoxelTerrainWorker::DirectionAlignedZ[] {0, 0, 1, 1, 2, 2};
