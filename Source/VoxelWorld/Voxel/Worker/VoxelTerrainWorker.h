@@ -33,6 +33,7 @@ private:
 	static const FVector CubeVertices[];
 	static const int32 CubeFaces[];
 	static const int32 CubeIndices[];
+	static const FVector2D CubeUVs[];
 	static const FIntVector VoxelDirectionOffsets[];
 	static const int32 DirectionAlignedX[];
 	static const int32 DirectionAlignedY[];

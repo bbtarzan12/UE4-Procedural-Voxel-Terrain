@@ -186,7 +186,8 @@ void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 type, float 
 		Vertex = (Vertex + FVector(GridLocation)) * Information.ChunkScale;
 
 		Information.Vertices.Add(Vertex);
-		Information.Normals.Add(FVector(VoxelDirectionOffsets[Direction]));
+		Information.Normals.Emplace(VoxelDirectionOffsets[Direction]);
+		Information.UVs.Emplace(CubeUVs[Index].X * Width, CubeUVs[Index].Y * Height);
 	}
 
 	for (int Index = 0; Index < 6; Index++)
@@ -197,14 +198,14 @@ void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 type, float 
 
 const FVector FVoxelTerrainWorker::CubeVertices[]
 {
-	FVector(0.f, 0.f, 0.f),
-	FVector(1.f, 0.f, 0.f),
-	FVector(1.f, 1.f, 0.f),
-	FVector(0.f, 1.f, 0.f),
-	FVector(0.f, 0.f, 1.f),
-	FVector(1.f, 0.f, 1.f),
-	FVector(1.f, 1.f, 1.f),
-	FVector(0.f, 1.f, 1.f)
+	{0.f, 0.f, 0.f},
+	{1.f, 0.f, 0.f},
+	{1.f, 1.f, 0.f},
+	{0.f, 1.f, 0.f},
+	{0.f, 0.f, 1.f},
+	{1.f, 0.f, 1.f},
+	{1.f, 1.f, 1.f},
+	{0.f, 1.f, 1.f}
 };
 
 const int32 FVoxelTerrainWorker::CubeFaces[]
@@ -233,14 +234,22 @@ const int32 FVoxelTerrainWorker::CubeIndices[]
 	0, 2, 3, //face bottom
 };
 
+const FVector2D FVoxelTerrainWorker::CubeUVs[]
+{
+	{0.0f, 0.0f},
+	{1.0f, 0.0f},
+	{0.0f, 1.0f},
+	{1.0f, 1.0f}
+};
+
 const FIntVector FVoxelTerrainWorker::VoxelDirectionOffsets[]
 {
-	FIntVector{1, 0, 0}, // front
-	FIntVector{-1, 0, 0}, // back
-	FIntVector{0, 1, 0}, // right
-	FIntVector{0, -1, 0}, // left
-	FIntVector{0, 0, 1}, // top
-	FIntVector{0, 0, -1}, // bottom
+	{1, 0, 0}, // front
+	{-1, 0, 0}, // back
+	{0, 1, 0}, // right
+	{0, -1, 0}, // left
+	{0, 0, 1}, // top
+	{0, 0, -1}, // bottom
 };
 
 const int32 FVoxelTerrainWorker::DirectionAlignedX[] {1, 1, 0, 0, 0, 0};

@@ -12,6 +12,8 @@ UVoxelMeshComponent::UVoxelMeshComponent(const FObjectInitializer& ObjectInitial
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	PrimaryComponentTick.TickInterval = 0.1f;
 	bUseAsyncCooking = true;
+
+	SetMobility(EComponentMobility::Static);
 }
 
 void UVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -19,7 +21,10 @@ void UVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	if (MeshQueue.IsEmpty())
+	{
+		PrimaryComponentTick.SetTickFunctionEnable(false);
 		return;
+	}
 
 	FTerrainWorkerInformation Information;
 	MeshQueue.Dequeue(Information);
@@ -40,5 +45,6 @@ void UVoxelMeshComponent::GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVec
 
 void UVoxelMeshComponent::FinishWork(const FTerrainWorkerInformation& Information)
 {
+	PrimaryComponentTick.SetTickFunctionEnable(true);
 	MeshQueue.Enqueue(Information);
 }
