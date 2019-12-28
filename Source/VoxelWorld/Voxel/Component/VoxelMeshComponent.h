@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "ProceduralMeshComponent.h"
 #include "../Voxel.h"
+#include "../Worker/TerrainWorkerInformation.h"
 #include "VoxelMeshComponent.generated.h"
+
 
 /**
  * 
@@ -16,20 +18,13 @@ class VOXELWORLD_API UVoxelMeshComponent : public UProceduralMeshComponent
 	GENERATED_BODY()
 	
 public:
-	void GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float Scale);
+	UVoxelMeshComponent(const FObjectInitializer& ObjectInitializer);
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float ChunkScale);
+	void FinishWork(const FTerrainWorkerInformation& Information);
 
 private:
-	TArray<FVector> Vertices;
-	TArray<int32> Indices;
-	TArray<FVector> Normals;
-	TArray<FVector2D> UVs;
-	TArray<FLinearColor> VertexColors;
-	TArray<FProcMeshTangent> Tangents;
-
-	static const FVector CubeVertices[];
-	static const int CubeFaces[];
-	static const int CubeIndices[];
-	static const FIntVector VoxelDirectionOffsets[];
-
+	TQueue<FTerrainWorkerInformation> MeshQueue;
 	
 };

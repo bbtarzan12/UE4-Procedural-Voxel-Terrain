@@ -23,17 +23,17 @@ public:
 private:
 	void GenerateTerrain();
 	void GenerateChunk(FIntVector ChunkLocation);
-
 	void ProcessChunkQueue();
 
 public:
+
+	TQueue<FIntVector> ChunkQueue;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Voxel)
 	TSet<FIntVector> LastPlayerLocations;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Voxel)
 	TMap<FIntVector, class AVoxelChunk*> Chunks;
-
-	TQueue<FIntVector> ChunkQueue;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Voxel)
 	FIntVector ChunkSize{ 16, 16, 128};

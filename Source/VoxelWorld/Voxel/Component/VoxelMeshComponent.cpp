@@ -3,86 +3,41 @@
 
 #include "VoxelMeshComponent.h"
 #include "../Util/VoxelUtil.h"
+#include "../Worker/VoxelTerrainWorker.h"
 
-void UVoxelMeshComponent::GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float Scale)
+UVoxelMeshComponent::UVoxelMeshComponent(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
-	int NumFaces = 0;
-	for (int32 Index = 0; Index < ChunkSize.X * ChunkSize.Y * ChunkSize.Z; Index++)
-	{
-		if(Voxels[Index].Type == 0)
-			continue;
-
-		FIntVector GridLocation = UVoxelUtil::To3DIndex(Index, ChunkSize);
-
-		for (int32 Direction = 0; Direction < 6; Direction++)
-		{
-			FIntVector NeighborLocation = GridLocation + VoxelDirectionOffsets[Direction];
-
-			if(UVoxelUtil::TransparencyCheck(Voxels, NeighborLocation, ChunkSize))
-				continue;
-
-			for (int32 I = 0; I < 4; I++)
-			{
-				FVector Vertex = (CubeVertices[CubeFaces[I + Direction * 4]] + FVector(GridLocation)) * Scale;
-				Vertices.Add(Vertex);
-				Normals.Add(FVector(VoxelDirectionOffsets[Direction]));
-			}
-
-			for (int J = 0; J < 6; J++)
-			{
-				Indices.Add(CubeIndices[Direction * 6 + J] + NumFaces * 4);
-			}
-			NumFaces++;
-		}
-	}
-
-	CreateMeshSection_LinearColor(0, Vertices, Indices, Normals, UVs, VertexColors, Tangents, true);
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.TickInterval = 0.1f;
 }
 
-const FVector UVoxelMeshComponent::CubeVertices[]
+void UVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	FVector(0.f, 0.f, 0.f),
-	FVector(1.f, 0.f, 0.f),
-	FVector(1.f, 1.f, 0.f),
-	FVector(0.f, 1.f, 0.f),
-	FVector(0.f, 0.f, 1.f),
-	FVector(1.f, 0.f, 1.f),
-	FVector(1.f, 1.f, 1.f),
-	FVector(0.f, 1.f, 1.f)
-};
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-const int UVoxelMeshComponent::CubeFaces[]
-{
-	1, 2, 5, 6, // front
-	3, 0, 7, 4, // back
-	2, 3, 6, 7, // right
-	0, 1, 4, 5, // left
-	4, 5, 7, 6, // top
-	3, 2, 0, 1, // bottom
-};
+	if (MeshQueue.IsEmpty())
+		return;
 
-const int UVoxelMeshComponent::CubeIndices[]
-{
-	0, 3, 1,
-	0, 2, 3, //face front
-	0, 3, 1,
-	0, 2, 3, //face back
-	0, 3, 1,
-	0, 2, 3, //face right
-	0, 3, 1,
-	0, 2, 3, //face left
-	0, 3, 1,
-	0, 2, 3, //face top
-	0, 3, 1,
-	0, 2, 3, //face bottom
-};
+	FTerrainWorkerInformation Information;
+	MeshQueue.Dequeue(Information);
+	CreateMeshSection_LinearColor(0, Information.Vertices, Information.Indices, Information.Normals, Information.UVs, Information.VertexColors, Information.Tangents, true);
+}
 
-const FIntVector UVoxelMeshComponent::VoxelDirectionOffsets[]
+void UVoxelMeshComponent::GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float ChunkScale)
 {
-	FIntVector{1, 0, 0}, // front
-	FIntVector{-1, 0, 0}, // back
-	FIntVector{0, 1, 0}, // right
-	FIntVector{0, -1, 0}, // left
-	FIntVector{0, 0, 1}, // top
-	FIntVector{0, 0, -1}, // bottom
-};
+	FTerrainWorkerInformation Information;
+
+	Information.Voxels = Voxels;
+	Information.MeshComponent = this;
+	Information.ChunkSize = ChunkSize;
+	Information.ChunkScale = ChunkScale;
+
+	FVoxelTerrainWorker::Enqueue(Information);
+}
+
+void UVoxelMeshComponent::FinishWork(const FTerrainWorkerInformation& Information)
+{
+	MeshQueue.Enqueue(Information);
+}
