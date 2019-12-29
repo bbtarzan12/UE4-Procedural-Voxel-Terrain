@@ -9,6 +9,8 @@
 
 class UVoxelTerrainGenerator;
 
+DECLARE_STATS_GROUP(TEXT("AVoxelChunk"), STATGROUP_AVoxelChunk, STATCAT_Advanced);
+
 UCLASS()
 class VOXELWORLD_API AVoxelChunk : public AActor
 {
@@ -22,10 +24,16 @@ public:
 
 	void GenerateVoxels();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds);
 
+private:
+	void GenerateMesh();
+
+	bool CheckNeighborChunksAllExists();
+
+public:
+	UPROPERTY()
+	TArray<FVoxel> Voxels;
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Voxel)
@@ -41,6 +49,6 @@ protected:
 	class UFastNoise* Noise;
 
 	UPROPERTY()
-	TArray<FVoxel> Voxels;
+	bool bDirty;
 
 };

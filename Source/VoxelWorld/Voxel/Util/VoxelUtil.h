@@ -74,5 +74,41 @@ public:
 			GridLocation.Z + ChunkLocation.Z * ChunkSize.Z
 		};
 	}
+
+	static FORCEINLINE FVector WorldGridToWorld(FIntVector WorldGridLocation, float ChunkScale)
+	{
+		return FVector
+		{
+			WorldGridLocation.X * ChunkScale,
+			WorldGridLocation.Y * ChunkScale,
+			WorldGridLocation.Z * ChunkScale
+		};
+	}
+
+	static FORCEINLINE FIntVector WorldGridToGrid(FIntVector WorldGridLocation, FIntVector ChunkLocation, FIntVector ChunkSize)
+	{
+		return FIntVector
+		{
+			Mod(WorldGridLocation.X - ChunkLocation.X * ChunkSize.X, ChunkSize.X),
+			Mod(WorldGridLocation.Y - ChunkLocation.Y * ChunkSize.Y, ChunkSize.Y),
+			Mod(WorldGridLocation.Z - ChunkLocation.Z * ChunkSize.Z, ChunkSize.Z)
+		};
+	}
+
+	static FORCEINLINE int32 Mod(int32 V, int32 M)
+	{
+		int32 R = V % M;
+		return R < 0 ? R + M : R;
+	}
+
+	static FORCEINLINE FIntVector Mod(FIntVector V, FIntVector M)
+	{
+		return FIntVector
+		{
+			Mod(V.X, M.X),
+			Mod(V.Y, M.Y),
+			Mod(V.Z, M.Z)
+		};
+	}
 	
 };

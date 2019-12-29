@@ -12,11 +12,13 @@ struct FTerrainWorkerInformation
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(BlueprintReadWrite)
-	TArray<FVoxel> Voxels;
+	TMap<FIntVector, TArray<FVoxel>> VoxelsWithNeighbors;
 
 	UPROPERTY(BlueprintReadWrite)
 	class UVoxelMeshComponent* MeshComponent;
+
+	UPROPERTY(BlueprintReadWrite)
+	FIntVector ChunkLocation;
 
 	UPROPERTY(BlueprintReadWrite)
 	FIntVector ChunkSize;

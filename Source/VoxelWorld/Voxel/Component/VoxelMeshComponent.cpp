@@ -13,7 +13,7 @@ UVoxelMeshComponent::UVoxelMeshComponent(const FObjectInitializer& ObjectInitial
 	PrimaryComponentTick.TickInterval = 0.1f;
 	bUseAsyncCooking = true;
 
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialObject(TEXT("Material'/Game/VoxelWorld/Material/M_Voxel'"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInstance> MaterialObject(TEXT("MaterialInstanceConstant'/Game/VoxelWorld/Material/MI_Voxel'"));
 
 	if (MaterialObject.Object)
 	{
@@ -29,28 +29,33 @@ void UVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	if (MeshQueue.IsEmpty())
 	{
-		PrimaryComponentTick.SetTickFunctionEnable(false);
 		return;
 	}
 
 	FTerrainWorkerInformation Information;
 	MeshQueue.Dequeue(Information);
 	CreateMeshSection_LinearColor(0, Information.Vertices, Information.Indices, Information.Normals, Information.UV0, Information.UV1, Information.UV2, Information.UV3, Information.VertexColors, Information.Tangents, true);
+
+	if (MeshQueue.IsEmpty())
+	{
+		PrimaryComponentTick.SetTickFunctionEnable(false);
+	}
 }
 
-void UVoxelMeshComponent::GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float ChunkScale)
+void UVoxelMeshComponent::GenerateVoxelMesh(const TMap<FIntVector, TArray<FVoxel>>& VoxelsWithNeighbors, FIntVector ChunkLocation, FIntVector ChunkSize, float ChunkScale)
 {
 	FTerrainWorkerInformation Information;
 
-	Information.Voxels = Voxels;
+	Information.VoxelsWithNeighbors = VoxelsWithNeighbors;
 	Information.MeshComponent = this;
 	Information.ChunkSize = ChunkSize;
 	Information.ChunkScale = ChunkScale;
+	Information.ChunkLocation = ChunkLocation;
 
 	FVoxelTerrainWorker::Enqueue(Information);
 }
 
-void UVoxelMeshComponent::FinishWork(FTerrainWorkerInformation Information)
+void UVoxelMeshComponent::FinishWork(const FTerrainWorkerInformation& Information)
 {
 	PrimaryComponentTick.SetTickFunctionEnable(true);
 	MeshQueue.Enqueue(Information);

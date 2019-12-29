@@ -21,8 +21,8 @@ public:
 	UVoxelMeshComponent(const FObjectInitializer& ObjectInitializer);
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float ChunkScale);
-	void FinishWork(FTerrainWorkerInformation Information);
+	void GenerateVoxelMesh(const TMap<FIntVector, TArray<FVoxel>>& VoxelsWithNeighbors, FIntVector ChunkLocation, FIntVector ChunkSize, float ChunkScale);
+	void FinishWork(const FTerrainWorkerInformation& Information);
 
 private:
 	TQueue<FTerrainWorkerInformation> MeshQueue;

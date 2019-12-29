@@ -7,11 +7,15 @@
 #include "FastNoise/FastNoise.h"
 #include "Util/VoxelUtil.h"
 
+DECLARE_CYCLE_STAT(TEXT("AVoxelChunk ~ GenerateVoxels"), STAT_GenerateVoxels, STATGROUP_AVoxelChunk);
+
 // Sets default values
 AVoxelChunk::AVoxelChunk()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
+	PrimaryActorTick.TickInterval = 0.1f;
 
 	VoxelMeshComponent = CreateDefaultSubobject<UVoxelMeshComponent>(TEXT("VoxelMesh"));
 
@@ -22,21 +26,80 @@ AVoxelChunk::AVoxelChunk()
 
 void AVoxelChunk::Init(FIntVector Location, UVoxelTerrainGenerator* TerrainGenerator)
 {
-	SetActorLabel(Location.ToString());
+	SetActorLabel(Location.ToString() + TEXT(" - Mesh X"));
 	ChunkLocation = Location;
 	Generator = TerrainGenerator;
 	GenerateVoxels();
+	bDirty = true;
+}
+
+void AVoxelChunk::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (Generator == nullptr)
+		return;
+
+	if (bDirty == false)
+		return;
+
+	if (CheckNeighborChunksAllExists() == false)
+		return;
+
+	GenerateMesh();
+}
+
+void AVoxelChunk::GenerateMesh()
+{
+	SetActorLabel(ChunkLocation.ToString());
+
+	TMap<FIntVector, TArray<FVoxel>> VoxelsWithNeighbors;
+
+	for (int32 X = ChunkLocation.X - 1; X <= ChunkLocation.X + 1; X++)
+	{
+		for (int32 Y = ChunkLocation.Y - 1; Y <= ChunkLocation.Y + 1; Y++)
+		{
+			FIntVector NeighborChunkLocation{ X, Y, 0 };
+			VoxelsWithNeighbors.Add(NeighborChunkLocation, Generator->Chunks[NeighborChunkLocation]->Voxels);
+		}
+	}
+
+	VoxelMeshComponent->GenerateVoxelMesh(VoxelsWithNeighbors, ChunkLocation, Generator->ChunkSize, Generator->ChunkScale);
+	bDirty = false;
+}
+
+bool AVoxelChunk::CheckNeighborChunksAllExists()
+{
+	if (Generator == nullptr)
+		return false;
+
+	for (int32 X = ChunkLocation.X - 1; X <= ChunkLocation.X + 1; X++)
+	{
+		for (int32 Y = ChunkLocation.Y - 1; Y <= ChunkLocation.Y + 1; Y++)
+		{
+			if (Generator->Chunks.Contains({ X, Y, 0 }))
+			{
+				continue;
+			}
+
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void AVoxelChunk::GenerateVoxels()
 {
+	SCOPE_CYCLE_COUNTER(STAT_GenerateVoxels);
+
 	if (Generator == nullptr)
 		return;
 
 	const FIntVector& ChunkSize = Generator->ChunkSize;
-	const float& ChunkScale = Generator->ChunkScale;
 
 	Voxels.SetNumUninitialized(ChunkSize.X * ChunkSize.Y * ChunkSize.Z);
+
 	for (int32 X = 0; X < ChunkSize.X; X++)
 	{
 		for (int32 Y = 0; Y < ChunkSize.Y; Y++)
@@ -70,13 +133,4 @@ void AVoxelChunk::GenerateVoxels()
 			}
 		}
 	}
-
-	VoxelMeshComponent->GenerateVoxelMesh(Voxels, ChunkSize, ChunkScale);
-}
-
-// Called when the game starts or when spawned
-void AVoxelChunk::BeginPlay()
-{
-	Super::BeginPlay();
-	
 }
