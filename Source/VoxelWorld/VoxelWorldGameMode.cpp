@@ -4,7 +4,7 @@
 #include "VoxelWorldHUD.h"
 #include "VoxelWorldCharacter.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Voxel/VoxelWorldGameState.h"
+#include "VoxelWorldGameState.h"
 
 AVoxelWorldGameMode::AVoxelWorldGameMode()
 	: Super()

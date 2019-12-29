@@ -34,7 +34,16 @@ struct FTerrainWorkerInformation
 	TArray<FVector> Normals;
 
 	UPROPERTY(BlueprintReadWrite)
-	TArray<FVector2D> UVs;
+	TArray<FVector2D> UV0;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FVector2D> UV1;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FVector2D> UV2;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FVector2D> UV3;
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FLinearColor> VertexColors;

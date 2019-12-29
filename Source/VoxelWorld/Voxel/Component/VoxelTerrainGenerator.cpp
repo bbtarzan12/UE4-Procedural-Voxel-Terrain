@@ -3,9 +3,9 @@
 
 #include "VoxelTerrainGenerator.h"
 #include <GameFramework/PlayerState.h>
-#include "../VoxelWorldGameState.h"
 #include "../Util/VoxelUtil.h"
 #include "../VoxelChunk.h"
+#include "../../VoxelWorldGameState.h"
 
 // Sets default values for this component's properties
 UVoxelTerrainGenerator::UVoxelTerrainGenerator()

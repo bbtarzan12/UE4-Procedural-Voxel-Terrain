@@ -13,6 +13,13 @@ UVoxelMeshComponent::UVoxelMeshComponent(const FObjectInitializer& ObjectInitial
 	PrimaryComponentTick.TickInterval = 0.1f;
 	bUseAsyncCooking = true;
 
+	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialObject(TEXT("Material'/Game/VoxelWorld/Material/M_Voxel'"));
+
+	if (MaterialObject.Object)
+	{
+		SetMaterial(0, MaterialObject.Object);
+	}
+
 	SetMobility(EComponentMobility::Static);
 }
 
@@ -28,7 +35,7 @@ void UVoxelMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
 	FTerrainWorkerInformation Information;
 	MeshQueue.Dequeue(Information);
-	CreateMeshSection_LinearColor(0, Information.Vertices, Information.Indices, Information.Normals, Information.UVs, Information.VertexColors, Information.Tangents, true);
+	CreateMeshSection_LinearColor(0, Information.Vertices, Information.Indices, Information.Normals, Information.UV0, Information.UV1, Information.UV2, Information.UV3, Information.VertexColors, Information.Tangents, true);
 }
 
 void UVoxelMeshComponent::GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float ChunkScale)
@@ -43,7 +50,7 @@ void UVoxelMeshComponent::GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVec
 	FVoxelTerrainWorker::Enqueue(Information);
 }
 
-void UVoxelMeshComponent::FinishWork(const FTerrainWorkerInformation& Information)
+void UVoxelMeshComponent::FinishWork(FTerrainWorkerInformation Information)
 {
 	PrimaryComponentTick.SetTickFunctionEnable(true);
 	MeshQueue.Enqueue(Information);

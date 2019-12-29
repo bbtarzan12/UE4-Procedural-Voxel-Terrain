@@ -18,12 +18,12 @@ public:
 	virtual uint32 Run() override;
 	virtual void Stop() override;
 
-	static void Enqueue(const FTerrainWorkerInformation& Information);
+	static void Enqueue(FTerrainWorkerInformation Information);
 	static void Shutdown();
 
 private:
 	void GenerateMesh(FTerrainWorkerInformation& Information);
-	void AddQuadByDirection(int32 Direction, uint8 type, float Width, float Height, FIntVector GridLocation, int32 NumFace, FTerrainWorkerInformation& Information);
+	void AddQuadByDirection(int32 Direction, uint8 Type, float Width, float Height, FIntVector GridLocation, int32 NumFace, FTerrainWorkerInformation& Information);
 
 	TQueue<FTerrainWorkerInformation> Queue;
 

@@ -51,7 +51,15 @@ void AVoxelChunk::GenerateVoxels()
 
 				density += Noise->GetSimplexFractal(WorldGridLocation.X, WorldGridLocation.Y) * 10.0f;
 
-				if (density >= 0)
+				if (density > 30)
+				{
+					Voxels[Index] = FVoxel{ 3 };
+				}
+				else if (density > 1)
+				{
+					Voxels[Index] = FVoxel{ 2 };
+				}
+				else if (density > 0)
 				{
 					Voxels[Index] = FVoxel{ 1 };
 				}

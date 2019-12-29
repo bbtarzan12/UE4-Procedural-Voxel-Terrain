@@ -22,7 +22,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void GenerateVoxelMesh(const TArray<FVoxel> Voxels, FIntVector ChunkSize, float ChunkScale);
-	void FinishWork(const FTerrainWorkerInformation& Information);
+	void FinishWork(FTerrainWorkerInformation Information);
 
 private:
 	TQueue<FTerrainWorkerInformation> MeshQueue;

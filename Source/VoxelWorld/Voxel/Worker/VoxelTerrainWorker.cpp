@@ -53,7 +53,7 @@ void FVoxelTerrainWorker::Stop()
 	Thread->WaitForCompletion();
 }
 
-void FVoxelTerrainWorker::Enqueue(const FTerrainWorkerInformation& Information)
+void FVoxelTerrainWorker::Enqueue(FTerrainWorkerInformation Information)
 {
 	if (!Runnable)
 	{
@@ -176,7 +176,7 @@ void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
 	}
 }
 
-void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 type, float Width, float Height, FIntVector GridLocation, int32 NumFace, FTerrainWorkerInformation& Information)
+void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 Type, float Width, float Height, FIntVector GridLocation, int32 NumFace, FTerrainWorkerInformation& Information)
 {
 	for (int32 Index = 0; Index < 4; Index++)
 	{
@@ -187,7 +187,8 @@ void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 type, float 
 
 		Information.Vertices.Add(Vertex);
 		Information.Normals.Emplace(VoxelDirectionOffsets[Direction]);
-		Information.UVs.Emplace(CubeUVs[Index].X * Width, CubeUVs[Index].Y * Height);
+		Information.UV0.Emplace(CubeUVs[Index].X * Width, CubeUVs[Index].Y * Height);
+		Information.UV1.Emplace(Type,0);
 	}
 
 	for (int Index = 0; Index < 6; Index++)
@@ -236,10 +237,10 @@ const int32 FVoxelTerrainWorker::CubeIndices[]
 
 const FVector2D FVoxelTerrainWorker::CubeUVs[]
 {
-	{0.0f, 0.0f},
-	{1.0f, 0.0f},
+	{1.0f, 1.0f},
 	{0.0f, 1.0f},
-	{1.0f, 1.0f}
+	{1.0f, 0.0f},
+	{0.0f, 0.0f},
 };
 
 const FIntVector FVoxelTerrainWorker::VoxelDirectionOffsets[]
