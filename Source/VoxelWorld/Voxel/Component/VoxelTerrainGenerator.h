@@ -20,6 +20,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	class AVoxelChunk* GetChunk(FIntVector ChunkLocation);
 	bool SetVoxel(FVector WorldLocation, uint8 Type);
 
 private:

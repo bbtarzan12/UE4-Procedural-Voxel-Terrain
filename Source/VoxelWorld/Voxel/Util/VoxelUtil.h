@@ -37,7 +37,7 @@ public:
 		return ChunkSize.X > GridLocation.X && ChunkSize.Y > GridLocation.Y && ChunkSize.Z > GridLocation.Z && GridLocation.X >= 0 && GridLocation.Y >= 0 && GridLocation.Z >= 0;
 	}
 
-	static FORCEINLINE bool TransparencyCheck(const TArray<FVoxel>& Voxels, FIntVector GridLocation, FIntVector ChunkSize)
+	static FORCEINLINE bool OpaqueCheck(const TArray<FVoxel>& Voxels, FIntVector GridLocation, FIntVector ChunkSize)
 	{
 		if (!BoundaryCheck(GridLocation, ChunkSize))
 			return false;
@@ -52,6 +52,16 @@ public:
 			FMath::FloorToInt(WorldLocation.X / ChunkSize.X / ChunkScale),
 			FMath::FloorToInt(WorldLocation.Y / ChunkSize.Y / ChunkScale),
 			FMath::FloorToInt(WorldLocation.Z / ChunkSize.Z / ChunkScale)
+		};
+	}
+
+	static FORCEINLINE FIntVector WorldGridToChunk(FVector WorldLocation, FIntVector ChunkSize)
+	{
+		return FIntVector
+		{
+			FMath::FloorToInt(WorldLocation.X / ChunkSize.X),
+			FMath::FloorToInt(WorldLocation.Y / ChunkSize.Y),
+			FMath::FloorToInt(WorldLocation.Z / ChunkSize.Z)
 		};
 	}
 

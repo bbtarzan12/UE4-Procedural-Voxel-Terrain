@@ -68,6 +68,11 @@ void AVoxelChunk::Tick(float DeltaSeconds)
 	}
 }
 
+void AVoxelChunk::SetDirty(bool bNewDirty)
+{
+	bDirty = bNewDirty;
+}
+
 bool AVoxelChunk::SetVoxel(FIntVector GridLocation, uint8 Type)
 {
 	if (UVoxelUtil::BoundaryCheck(GridLocation, Generator->ChunkSize))

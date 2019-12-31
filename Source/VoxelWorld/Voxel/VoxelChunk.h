@@ -25,6 +25,7 @@ public:
 
 	virtual void Tick(float DeltaSeconds);
 
+	void SetDirty(bool bNewDirty);
 	bool SetVoxel(FIntVector GridLocation, uint8 Type);
 
 	void FinishWork(const FTerrainWorkerInformation& Information);

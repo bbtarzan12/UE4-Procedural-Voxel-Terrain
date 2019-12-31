@@ -26,17 +26,43 @@ void UVoxelTerrainGenerator::TickComponent(float DeltaTime, ELevelTick TickType,
 	ProcessChunkQueue();
 }
 
+AVoxelChunk* UVoxelTerrainGenerator::GetChunk(FIntVector ChunkLocation)
+{
+	AVoxelChunk** Chunk = Chunks.Find(ChunkLocation);
+	if (Chunk)
+	{
+		return *Chunk;
+	}
+
+	return nullptr;
+}
+
 bool UVoxelTerrainGenerator::SetVoxel(FVector WorldLocation, uint8 Type)
 {
 	FIntVector ChunkLocation = UVoxelUtil::WorldToChunk(WorldLocation, ChunkSize, ChunkScale);
 
-	if (Chunks.Contains(ChunkLocation))
+	if (AVoxelChunk* Chunk = GetChunk(ChunkLocation))
 	{
-		if (AVoxelChunk* Chunk = Chunks[ChunkLocation])
+		FIntVector GridLocation = UVoxelUtil::WorldToGrid(WorldLocation, ChunkLocation, ChunkSize, ChunkScale);
+
+		if (Chunk->SetVoxel(GridLocation, Type) == false)
+			return false;
+
+		for (int32 X = -1; X <= 1; X++)
 		{
-			FIntVector GridLocation = UVoxelUtil::WorldToGrid(WorldLocation, ChunkLocation, ChunkSize, ChunkScale);
-			return Chunk->SetVoxel(GridLocation, Type);
+			for (int32 Y = -1; Y <= 1; Y++)
+			{
+				if(UVoxelUtil::BoundaryCheck(GridLocation + FIntVector(X, Y, 0), ChunkSize))
+					continue;;
+
+				if (AVoxelChunk* NeighborChunk = GetChunk(ChunkLocation + FIntVector(X, Y, 0)))
+				{
+					NeighborChunk->SetDirty(true);
+				}
+			}
 		}
+
+		return true;
 	}
 
 	return false;

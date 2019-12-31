@@ -108,7 +108,7 @@ void FVoxelTerrainWorker::BuildLight(FTerrainWorkerInformation& Information)
 				{
 					FIntVector NeighborLocation = GridLocation + VoxelDirectionOffsets[Direction];
 
-					if(UVoxelUtil::TransparencyCheck(Voxels, NeighborLocation, ChunkSize))
+					if(UVoxelUtil::OpaqueCheck(Voxels, NeighborLocation, ChunkSize))
 						continue;
 
 					// Todo : Code Cleanup!!
@@ -229,7 +229,7 @@ void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
 					const FVoxelLight& Light = Lights[VoxelIndex];
 					FIntVector NeighborLocation = GridLocation + VoxelDirectionOffsets[Direction];
 
-					if (UVoxelUtil::TransparencyCheck(Voxels, NeighborLocation, ChunkSize))
+					if (UVoxelUtil::OpaqueCheck(Voxels, NeighborLocation, ChunkSize))
 					{
 						Y++;
 						continue;
@@ -242,6 +242,10 @@ void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
 					{
 						FIntVector NextLocation = GridLocation;
 						NextLocation[DirectionAlignedY[Direction]] += Height;
+
+						FIntVector NeighborNextLocation = NextLocation + VoxelDirectionOffsets[Direction];
+						if (UVoxelUtil::OpaqueCheck(Voxels, NeighborNextLocation, ChunkSize))
+							break;
 
 						int32 NextIndex = UVoxelUtil::To1DIndex(NextLocation, ChunkSize);
 
@@ -269,6 +273,13 @@ void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
 							FIntVector NextLocation = GridLocation;
 							NextLocation[DirectionAlignedX[Direction]] += Width;
 							NextLocation[DirectionAlignedY[Direction]] += dy;
+
+							FIntVector NeighborNextLocation = NextLocation + VoxelDirectionOffsets[Direction];
+							if (UVoxelUtil::OpaqueCheck(Voxels, NeighborNextLocation, ChunkSize))
+							{
+								bDone = true;
+								break;
+							}
 
 							int32 NextIndex = UVoxelUtil::To1DIndex(NextLocation, ChunkSize);
 
