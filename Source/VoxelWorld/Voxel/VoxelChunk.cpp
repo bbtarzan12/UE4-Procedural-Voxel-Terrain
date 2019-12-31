@@ -2,10 +2,10 @@
 
 
 #include "VoxelChunk.h"
-#include "Component/VoxelMeshComponent.h"
 #include "Component/VoxelTerrainGenerator.h"
 #include "FastNoise/FastNoise.h"
 #include "Util/VoxelUtil.h"
+#include "Worker/VoxelTerrainWorker.h"
 
 DECLARE_CYCLE_STAT(TEXT("AVoxelChunk ~ GenerateVoxels"), STAT_GenerateVoxels, STATGROUP_AVoxelChunk);
 
@@ -17,11 +17,20 @@ AVoxelChunk::AVoxelChunk()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.TickInterval = 0.1f;
 
-	VoxelMeshComponent = CreateDefaultSubobject<UVoxelMeshComponent>(TEXT("VoxelMesh"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInstance> MaterialObject(TEXT("MaterialInstanceConstant'/Game/VoxelWorld/Material/MI_Voxel'"));
+
+	MeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("ProceduralMesh"));
+	MeshComponent->bUseAsyncCooking = true;
+
+	if (MaterialObject.Object)
+	{
+		MeshComponent->SetMaterial(0, MaterialObject.Object);
+		MeshComponent->SetMobility(EComponentMobility::Static);
+	}
 
 	Noise = NewObject<UFastNoise>();
 
-	RootComponent = VoxelMeshComponent;
+	RootComponent = MeshComponent;
 }
 
 void AVoxelChunk::Init(FIntVector Location, UVoxelTerrainGenerator* TerrainGenerator)
@@ -40,13 +49,40 @@ void AVoxelChunk::Tick(float DeltaSeconds)
 	if (Generator == nullptr)
 		return;
 
-	if (bDirty == false)
-		return;
+	if (bDirty)
+	{
+		if (CheckNeighborChunksAllExists() == false)
+			return;
 
-	if (CheckNeighborChunksAllExists() == false)
-		return;
+		MeshQueue.Empty();
+		GenerateMesh();
+	}
+	else
+	{
+		if (MeshQueue.IsEmpty())
+			return;
 
-	GenerateMesh();
+		FTerrainWorkerInformation Information;
+		while (MeshQueue.Dequeue(Information)) {}
+		MeshComponent->CreateMeshSection_LinearColor(0, Information.Vertices, Information.Indices, Information.Normals, Information.UV0, Information.UV1, Information.UV2, Information.UV3, Information.VertexColors, Information.Tangents, true);
+	}
+}
+
+bool AVoxelChunk::SetVoxel(FIntVector GridLocation, uint8 Type)
+{
+	if (UVoxelUtil::BoundaryCheck(GridLocation, Generator->ChunkSize))
+	{
+		Voxels[UVoxelUtil::To1DIndex(GridLocation, Generator->ChunkSize)].Type = Type;
+		bDirty = true;
+		return true;
+	}
+
+	return false;
+}
+
+void AVoxelChunk::FinishWork(const FTerrainWorkerInformation& Information)
+{
+	MeshQueue.Enqueue(Information);
 }
 
 void AVoxelChunk::GenerateMesh()
@@ -64,7 +100,15 @@ void AVoxelChunk::GenerateMesh()
 		}
 	}
 
-	VoxelMeshComponent->GenerateVoxelMesh(VoxelsWithNeighbors, ChunkLocation, Generator->ChunkSize, Generator->ChunkScale);
+	FTerrainWorkerInformation Information;
+
+	Information.VoxelsWithNeighbors = VoxelsWithNeighbors;
+	Information.Chunk = this;
+	Information.ChunkSize = Generator->ChunkSize;
+	Information.ChunkScale = Generator->ChunkScale;
+	Information.ChunkLocation = ChunkLocation;
+
+	FVoxelTerrainWorker::Enqueue(Information);
 	bDirty = false;
 }
 
@@ -114,15 +158,15 @@ void AVoxelChunk::GenerateVoxels()
 
 				density += Noise->GetSimplexFractal(WorldGridLocation.X, WorldGridLocation.Y) * 10.0f;
 
-				if (density > 30)
+				if (density >= 2)
 				{
 					Voxels[Index] = FVoxel{ 3 };
 				}
-				else if (density > 1)
+				else if (density >= 1)
 				{
 					Voxels[Index] = FVoxel{ 2 };
 				}
-				else if (density > 0)
+				else if (density >= 0)
 				{
 					Voxels[Index] = FVoxel{ 1 };
 				}

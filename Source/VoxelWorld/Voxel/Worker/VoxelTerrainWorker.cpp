@@ -2,8 +2,8 @@
 
 
 #include "VoxelTerrainWorker.h"
-#include "../Component/VoxelMeshComponent.h"
 #include "../Util/VoxelUtil.h"
+#include "../VoxelChunk.h"
 
 DECLARE_CYCLE_STAT(TEXT("FVoxelTerrainWorker ~ BuildLight"), STAT_BuildLight, STATGROUP_FVoxelTerrainWorker);
 DECLARE_CYCLE_STAT(TEXT("FVoxelTerrainWorker ~ GenerateMesh"), STAT_GenerateMesh, STATGROUP_FVoxelTerrainWorker);
@@ -44,9 +44,9 @@ uint32 FVoxelTerrainWorker::Run()
 		BuildLight(Information);
 		GenerateMesh(Information);
 
-		if (StopCounter.GetValue() == 0 && Information.MeshComponent)
+		if (StopCounter.GetValue() == 0 && Information.Chunk)
 		{
-			Information.MeshComponent->FinishWork(Information);
+			Information.Chunk->FinishWork(Information);
 		}
 	}
 	return 0;
@@ -153,11 +153,11 @@ void FVoxelTerrainWorker::BuildLight(FTerrainWorkerInformation& Information)
 
 						if (Side1 && Side2)
 						{
-							Lights[VoxelIndex].Ambient[Index + Direction * 4] = 0.f;
+							Lights[VoxelIndex].Ambient[Index + Direction * 4] = 1.f;
 						}
 						else
 						{
-							Lights[VoxelIndex].Ambient[Index + Direction * 4] = ((Side1 ? 0.f : 1.f) + (Side2 ? 0.f : 1.f) + (Corner ? 0.f : 1.f)) / 3.f;
+							Lights[VoxelIndex].Ambient[Index + Direction * 4] = ((Side1 ? 1.f : 0.f) + (Side2 ? 1.f : 0.f) + (Corner ? 1.f : 0.f)) / 3.f;
 						}
 					}
 				}
@@ -251,7 +251,7 @@ void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
 						if (NextVoxel.Type != Voxel.Type)
 							break;
 
-						if (!NextLight.CompareFace(Light, Direction))
+						if (!NextLight.CompareAmbient(Light, Direction))
 							break;
 
 						if (VisitedSet.Contains(NextLocation))
@@ -275,7 +275,7 @@ void FVoxelTerrainWorker::GenerateMesh(FTerrainWorkerInformation& Information)
 							const FVoxel& NextVoxel = Voxels[NextIndex];
 							const FVoxelLight& NextLight = Lights[NextIndex];
 
-							if (NextVoxel.Type != Voxel.Type || VisitedSet.Contains(NextLocation) || !NextLight.CompareFace(Light, Direction))
+							if (NextVoxel.Type != Voxel.Type || VisitedSet.Contains(NextLocation) || !NextLight.CompareAmbient(Light, Direction))
 							{
 								bDone = true;
 								break;
@@ -323,7 +323,7 @@ void FVoxelTerrainWorker::AddQuadByDirection(int32 Direction, uint8 Type, const 
 
 	for (int Index = 0; Index < 6; Index++)
 	{
-		if (Light.Ambient[Direction * 4] + Light.Ambient[Direction * 4 + 3] < Light.Ambient[Direction * 4 + 1] + Light.Ambient[Direction * 4 + 2])
+		if (Light.Ambient[Direction * 4] + Light.Ambient[Direction * 4 + 3] > Light.Ambient[Direction * 4 + 1] + Light.Ambient[Direction * 4 + 2])
 		{
 			Information.Indices.Add(CubeFlipedIndices[Direction * 6 + Index] + NumFace * 4);
 		}

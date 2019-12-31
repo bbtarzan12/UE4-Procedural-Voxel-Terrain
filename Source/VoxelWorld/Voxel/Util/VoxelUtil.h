@@ -95,6 +95,16 @@ public:
 		};
 	}
 
+	static FORCEINLINE FIntVector WorldToGrid(FVector WorldLocation, FIntVector ChunkLocation, FIntVector ChunkSize, float ChunkScale)
+	{
+		return FIntVector
+		{
+			Mod(WorldLocation.X / ChunkScale - ChunkLocation.X * ChunkSize.X, ChunkSize.X),
+			Mod(WorldLocation.Y / ChunkScale - ChunkLocation.Y * ChunkSize.Y, ChunkSize.Y),
+			Mod(WorldLocation.Z / ChunkScale - ChunkLocation.Z * ChunkSize.Z, ChunkSize.Z)
+		};
+	}
+
 	static FORCEINLINE int32 Mod(int32 V, int32 M)
 	{
 		int32 R = V % M;

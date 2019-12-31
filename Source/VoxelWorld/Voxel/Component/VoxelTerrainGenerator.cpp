@@ -26,6 +26,22 @@ void UVoxelTerrainGenerator::TickComponent(float DeltaTime, ELevelTick TickType,
 	ProcessChunkQueue();
 }
 
+bool UVoxelTerrainGenerator::SetVoxel(FVector WorldLocation, uint8 Type)
+{
+	FIntVector ChunkLocation = UVoxelUtil::WorldToChunk(WorldLocation, ChunkSize, ChunkScale);
+
+	if (Chunks.Contains(ChunkLocation))
+	{
+		if (AVoxelChunk* Chunk = Chunks[ChunkLocation])
+		{
+			FIntVector GridLocation = UVoxelUtil::WorldToGrid(WorldLocation, ChunkLocation, ChunkSize, ChunkScale);
+			return Chunk->SetVoxel(GridLocation, Type);
+		}
+	}
+
+	return false;
+}
+
 void UVoxelTerrainGenerator::GenerateTerrain()
 {
 	if (AVoxelWorldGameState* GameState = Cast<AVoxelWorldGameState>(GetOwner()))

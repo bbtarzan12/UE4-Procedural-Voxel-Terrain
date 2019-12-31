@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Voxel.h"
+#include "Worker/TerrainWorkerInformation.h"
 #include "VoxelChunk.generated.h"
 
 class UVoxelTerrainGenerator;
@@ -22,11 +23,14 @@ public:
 
 	void Init(FIntVector ChunkLocation, UVoxelTerrainGenerator* TerrainGenerator);
 
-	void GenerateVoxels();
-
 	virtual void Tick(float DeltaSeconds);
 
+	bool SetVoxel(FIntVector GridLocation, uint8 Type);
+
+	void FinishWork(const FTerrainWorkerInformation& Information);
+
 private:
+	void GenerateVoxels();
 	void GenerateMesh();
 
 	bool CheckNeighborChunksAllExists();
@@ -35,16 +39,18 @@ public:
 	UPROPERTY()
 	TArray<FVoxel> Voxels;
 
+	TQueue<FTerrainWorkerInformation> MeshQueue;
+
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Voxel)
-	class UVoxelMeshComponent* VoxelMeshComponent;
+	class UProceduralMeshComponent* MeshComponent;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Voxel)
 	class UVoxelTerrainGenerator* Generator;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Voxel)
 	FIntVector ChunkLocation;
-
+	
 	UPROPERTY()
 	class UFastNoise* Noise;
 

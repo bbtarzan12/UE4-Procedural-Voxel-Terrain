@@ -13,7 +13,7 @@ struct FVoxelLight
 	UPROPERTY()
 	float Ambient[24];
 
-	bool CompareFace(const FVoxelLight& Other, int32 Direction) const
+	bool CompareAmbient(const FVoxelLight& Other, int32 Direction) const
 	{
 		for (int32 Index = 0; Index < 4; Index++)
 		{

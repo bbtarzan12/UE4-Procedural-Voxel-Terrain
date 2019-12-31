@@ -15,7 +15,7 @@ struct FTerrainWorkerInformation
 	TMap<FIntVector, TArray<FVoxel>> VoxelsWithNeighbors;
 
 	UPROPERTY(BlueprintReadWrite)
-	class UVoxelMeshComponent* MeshComponent;
+	class AVoxelChunk* Chunk;
 
 	UPROPERTY(BlueprintReadWrite)
 	FIntVector ChunkLocation;

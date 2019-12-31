@@ -17,6 +17,8 @@ class VOXELWORLD_API AVoxelWorldGameState : public AGameState
 public:
 	AVoxelWorldGameState();
 
+	FORCEINLINE class UVoxelTerrainGenerator* GetVoxelTerrainGenerator() const { return TerrainGenerator; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Voxel)
 	class UVoxelTerrainGenerator* TerrainGenerator;

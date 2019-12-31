@@ -20,6 +20,8 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	bool SetVoxel(FVector WorldLocation, uint8 Type);
+
 private:
 	void GenerateTerrain();
 	void GenerateChunk(FIntVector ChunkLocation);
